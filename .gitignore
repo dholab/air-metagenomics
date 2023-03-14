@@ -1,6 +1,8 @@
 .nextflow/
 work/
 .nova/
+reads/
+results/
 
 .nextflow.log*
 .DS_Store

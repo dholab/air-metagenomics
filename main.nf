@@ -14,6 +14,9 @@ workflow {
         .fromPath( params.samplesheet )
         .splitCsv( header: true )
         .map { row -> tuple( row.raw_read_label, row.sample_id, row.parent_dir ) }
+    
+    ch_ref_seqs = Channel
+        .fromPath( params.virus_ref )
 	
 	// Workflow steps 
     FIND_AND_MERGE_FASTQS (
@@ -25,7 +28,8 @@ workflow {
     )
 
     MAP_TO_REFSEQS (
-        SAMPLE_QC.out
+        SAMPLE_QC.out,
+        ch_ref_seqs
     )
 	
 	
@@ -61,7 +65,7 @@ process FIND_AND_MERGE_FASTQS {
     publishDir params.merged_fastqs, mode: 'symlink'
 	
 	input:
-	tuple val(label), val(sample_id), val(parent_dir)
+	tuple val(label), val(sample_id), path(parent_dir)
 	
 	output:
 	tuple path("*.fastq.gz"), val(sample_id)
@@ -93,7 +97,7 @@ process SAMPLE_QC {
     */
 	
 	tag "${sample_id}"
-    publishDir params.results, mode: 'copy'
+    publishDir params.filtered_fastqs, mode: 'copy'
 	
 	input:
 	tuple path(fastq), val(sample_id)
@@ -136,10 +140,11 @@ process MAP_TO_REFSEQS {
     */
 	
 	tag "${sample_id}"
-    publishDir params.results, mode: 'copy'
+    publishDir params.bams, mode: 'copy'
 	
 	input:
 	tuple path(fastq), val(sample_id)
+    each path(refseq)
 	
 	output:
 	tuple path("*.bam*"), val(sample_id)
@@ -148,12 +153,12 @@ process MAP_TO_REFSEQS {
 	"""
     minimap2 \
     -ax map-ont \
-    ${params.virus_ref} \
+    ${refseq} \
     ${fastq} \
     --eqx \
     | reformat.sh \
     in=stdin.sam \
-    ref=${params.virus_ref} \
+    ref=${refseq} \
     out=${sample_id}_filtered.bam \
     mappedonly=t
 	"""
