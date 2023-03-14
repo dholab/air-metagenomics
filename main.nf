@@ -13,7 +13,7 @@ workflow {
 	ch_reads = Channel
         .fromPath( params.samplesheet )
         .splitCsv( header: true )
-        .map { row -> tuple( row.raw_read_label, row.sample_id ) }
+        .map { row -> tuple( row.raw_read_label, row.sample_id, row.parent_dir ) }
 	
 	// Workflow steps 
     FIND_AND_MERGE_FASTQS (
@@ -61,7 +61,7 @@ process FIND_AND_MERGE_FASTQS {
     publishDir params.merged_fastqs, mode: 'symlink'
 	
 	input:
-	tuple val(label), val(sample_id)
+	tuple val(label), val(sample_id), val(parent_dir)
 	
 	output:
 	tuple path("*.fastq.gz"), val(sample_id)
@@ -79,7 +79,7 @@ process FIND_AND_MERGE_FASTQS {
         """
     else
         """
-        cat ${params.raw_reads}/${label}*.fastq.gz > ${sample_id}.fastq.gz
+        cat ${parent_dir}/${label}*.fastq.gz > ${sample_id}.fastq.gz
         """
 }
 
@@ -101,12 +101,28 @@ process SAMPLE_QC {
 	tuple path("*.fastq.gz"), val(sample_id)
 	
 	script:
-	"""
-	reformat.sh in=${fastq} \
-    out=${sample_id}_filtered.fastq.gz \
-    forcetrimleft=30 forcetrimright2=30 \
-    mincalledquality=7 minlength=200 qin=33
-	"""
+    if ( params.ont == true )
+        """
+        cutadapt -a ${params.adapter_seq} \
+        -m 200 -q 30 --trim-n --trim-q 7 \
+        -o ${sample_id}_filtered.fastq.gz \
+        ${fastq}
+        """
+    else if( params.pacbio == true )
+        """
+        reformat.sh in=${fastq} \
+        out=${sample_id}_filtered.fastq.gz \
+        forcetrimleft=30 forcetrimright2=30 \
+        mincalledquality=7 minlength=200 qin=33
+        """
+    else 
+        """
+        reformat.sh in=${fastq} \
+        out=${sample_id}_filtered.fastq.gz \
+        forcetrimleft=30 forcetrimright2=30 \
+        mincalledquality=7 minlength=200 qin=33
+        """
+        
 }
 
 
