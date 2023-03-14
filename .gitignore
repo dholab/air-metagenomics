@@ -1,0 +1,12 @@
+.nextflow/
+work/
+.nova/
+
+.nextflow.log*
+.DS_Store
+trace.txt*
+report.html.*
+timeline.html*
+report.html*
+*.dot
+*.png.*
