@@ -88,7 +88,8 @@ process SAMPLE_QC {
 	
 	/*
     Here we run some trimming and quality filtering with the bbmap
-    script `reformat.sh`
+    script `reformat.sh` for PacBio or Illumina reads, or cutadapt
+    for ONT reads.
     */
 	
 	tag "${sample_id}"
@@ -104,7 +105,7 @@ process SAMPLE_QC {
     if ( params.ont == true )
         """
         cutadapt -a ${params.adapter_seq} \
-        -m 200 -q 30 --trim-n --trim-q 7 \
+        -m 200 -q 30 --trim-n \
         -o ${sample_id}_filtered.fastq.gz \
         ${fastq}
         """
@@ -122,7 +123,7 @@ process SAMPLE_QC {
         forcetrimleft=30 forcetrimright2=30 \
         mincalledquality=7 minlength=200 qin=33
         """
-        
+
 }
 
 
