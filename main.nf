@@ -16,12 +16,12 @@ workflow {
         .map { row -> tuple( row.raw_read_label, row.sample_id ) }
 	
 	// Workflow steps 
-    MERGE_FASTQS (
+    FIND_AND_MERGE_FASTQS (
         ch_reads
     )
 
     SAMPLE_QC (
-        MERGE_FASTQS.out
+        FIND_AND_MERGE_FASTQS.out
     )
 
     MAP_TO_REFSEQS (
@@ -48,12 +48,13 @@ params.bams = params.results + "/3_alignment_maps"
 // PROCESS SPECIFICATION 
 // --------------------------------------------------------------- //
 
-process MERGE_FASTQS {
+process FIND_AND_MERGE_FASTQS {
 	
-	/* 
-    Here we concatenate all the FASTQ files for each barcode,
-    and name them according to the sample ID specified in the 
-    samplesheet.
+	/*
+    Here we determine if the read labels are SRA accessions or 
+    local file names. If they are SRA accessions, they will be 
+    downloaded and merged automatically from SRA servers. If 
+    they are local, they will be located and merged.
     */ 
 	
 	tag "${sample_id}"
@@ -66,9 +67,20 @@ process MERGE_FASTQS {
 	tuple path("*.fastq.gz"), val(sample_id)
 	
 	script:
-	"""
-	cat ${params.raw_reads}/${label}*.fastq.gz > ${sample_id}.fastq.gz
-	"""
+    if ( label.startsWith("SRR") )
+        """
+        prefetch ${label}
+	    fasterq-dump ${label}/${label}.sra \
+	    --concatenate-reads --skip-technical --quiet && \
+	    gzip ${label}.sra.fastq
+	    mv ${label}.sra.fastq.gz ${sample_id}.fastq.gz
+	    rm -rf ${label}/
+	    rm -rf fasterq.tmp.*
+        """
+    else
+        """
+        cat ${params.raw_reads}/${label}*.fastq.gz > ${sample_id}.fastq.gz
+        """
 }
 
 
