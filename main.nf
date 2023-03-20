@@ -41,9 +41,20 @@ workflow {
 // DERIVATIVE PARAMETER SPECIFICATION
 // --------------------------------------------------------------- //
 // Additional parameters that are derived from parameters set in nextflow.config
+
+// specifying whether to run in low disk mode
+if( params.low_disk_mode == true ) {
+	params.publishMode = 'symlink'
+}
+else {
+	params.publishMode = 'copy'
+}
+
+// Results subdirectories
 params.merged_fastqs = params.results + "/1_merged_fastqs"
 params.filtered_fastqs = params.results + "/2_filtered_fastqs"
 params.bams = params.results + "/3_alignment_maps"
+
 // --------------------------------------------------------------- //
 
 
@@ -62,7 +73,7 @@ process FIND_AND_MERGE_FASTQS {
     */ 
 	
 	tag "${sample_id}"
-    publishDir params.merged_fastqs, mode: 'symlink'
+    publishDir params.merged_fastqs, mode: params.publishMode
 	
 	input:
 	tuple val(label), val(sample_id), path(parent_dir)
@@ -83,7 +94,8 @@ process FIND_AND_MERGE_FASTQS {
         """
     else
         """
-        cat ${parent_dir}/${label}*.fastq.gz > ${sample_id}.fastq.gz
+        zcat ${parent_dir}/${label}*.fastq.gz > ${sample_id}.fastq && \
+        gzip ${sample_id}.fastq
         """
 }
 
@@ -110,6 +122,7 @@ process SAMPLE_QC {
         """
         cutadapt -a ${params.adapter_seq} \
         -m 200 -q 30 --trim-n \
+        forcetrimleft=30 forcetrimright2=30 \
         -o ${sample_id}_filtered.fastq.gz \
         ${fastq}
         """
@@ -118,14 +131,14 @@ process SAMPLE_QC {
         reformat.sh in=${fastq} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=7 minlength=200 qin=33
+        mincalledquality=9 minlength=200 qin=33
         """
     else 
         """
         reformat.sh in=${fastq} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=7 minlength=200 qin=33
+        mincalledquality=9 minlength=200 qin=33
         """
 
 }
