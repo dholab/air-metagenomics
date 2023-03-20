@@ -94,8 +94,7 @@ process FIND_AND_MERGE_FASTQS {
         """
     else
         """
-        zcat ${parent_dir}/${label}*.fastq.gz > ${sample_id}.fastq && \
-        gzip ${sample_id}.fastq
+        cat ${parent_dir}/${label}*.fastq.gz > ${sample_id}.fastq.gz
         """
 }
 
@@ -121,8 +120,7 @@ process SAMPLE_QC {
     if ( params.ont == true )
         """
         cutadapt -a ${params.adapter_seq} \
-        -m 200 -q 30 --trim-n \
-        forcetrimleft=30 forcetrimright2=30 \
+        -m 200 -q 30 --trim-n \\
         -o ${sample_id}_filtered.fastq.gz \
         ${fastq}
         """
