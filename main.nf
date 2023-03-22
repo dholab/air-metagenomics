@@ -73,7 +73,7 @@ process FIND_AND_MERGE_FASTQS {
     */ 
 	
 	tag "${sample_id}"
-    publishDir params.merged_fastqs, mode: params.publishMode
+    publishDir params.merged_fastqs, mode: params.publishMode, overwite: true
 	
 	input:
 	tuple val(label), val(sample_id), path(parent_dir)
@@ -94,7 +94,13 @@ process FIND_AND_MERGE_FASTQS {
         """
     else
         """
-        cat ${parent_dir}/${label}*.fastq.gz > ${sample_id}.fastq.gz
+        find ${parent_dir} -type f -name ${label}*.fastq.gz > fastq_list.txt && \
+        touch ${sample_id}.fastq && \
+        for i in `cat fastq_list.txt`;
+        do
+            zcat \$i >> ${sample_id}.fastq
+        done && \
+        gzip ${sample_id}.fastq
         """
 }
 
@@ -108,7 +114,7 @@ process SAMPLE_QC {
     */
 	
 	tag "${sample_id}"
-    publishDir params.filtered_fastqs, mode: 'copy'
+    publishDir params.filtered_fastqs, mode: 'copy', overwite: true
 	
 	input:
 	tuple path(fastq), val(sample_id)
@@ -119,24 +125,24 @@ process SAMPLE_QC {
 	script:
     if ( params.ont == true )
         """
-        cutadapt -a ${params.adapter_seq} \
-        -m 200 -q 30 --trim-n \\
-        -o ${sample_id}_filtered.fastq.gz \
-        ${fastq}
+        reformat.sh in=${fastq} \
+        out=${sample_id}_filtered.fastq.gz \
+        forcetrimleft=30 forcetrimright2=30 \
+        mincalledquality=9 qin=33
         """
     else if( params.pacbio == true )
         """
         reformat.sh in=${fastq} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 minlength=200 qin=33
+        mincalledquality=9 qin=33
         """
     else 
         """
         reformat.sh in=${fastq} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 minlength=200 qin=33
+        mincalledquality=9 qin=33
         """
 
 }
@@ -151,7 +157,7 @@ process MAP_TO_REFSEQS {
     */
 	
 	tag "${sample_id}"
-    publishDir params.bams, mode: 'copy'
+    publishDir params.bams, mode: 'copy', overwite: true
 	
 	input:
 	tuple path(fastq), val(sample_id)
