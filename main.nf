@@ -98,6 +98,7 @@ process FIND_AND_MERGE_FASTQS {
         touch ${sample_id}.fastq && \
         for i in `cat fastq_list.txt`;
         do
+            echo "now unzipping " \$i
             zcat \$i >> ${sample_id}.fastq
         done && \
         gzip ${sample_id}.fastq
