@@ -159,6 +159,8 @@ process MAP_TO_REFSEQS {
 	
 	tag "${sample_id}"
     publishDir params.bams, mode: 'copy', overwite: true
+    
+    cpus 4
 	
 	input:
 	tuple path(fastq), val(sample_id)
@@ -174,6 +176,7 @@ process MAP_TO_REFSEQS {
     ${refseq} \
     ${fastq} \
     --eqx \
+    -t 3 \
     | reformat.sh \
     in=stdin.sam \
     ref=${refseq} \
