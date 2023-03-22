@@ -94,7 +94,7 @@ process FIND_AND_MERGE_FASTQS {
         """
     else
         """
-        find ${parent_dir} -type f -name ${label}*.fastq.gz > fastq_list.txt && \
+        find `realpath ${parent_dir}` -type f -name ${label}*.fastq.gz > fastq_list.txt && \
         touch ${sample_id}.fastq && \
         for i in `cat fastq_list.txt`;
         do
