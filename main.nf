@@ -77,12 +77,14 @@ process FIND_AND_MERGE_FASTQS {
 
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
+
+    cpus 2
 	
 	input:
 	tuple val(label), val(sample_id), path(parent_dir)
 	
 	output:
-	tuple path("*.fastq.gz"), val(sample_id)
+	tuple path("${sample_id}.fastq.gz"), val(sample_id)
 	
 	script:
     if ( label.startsWith("SRR") )
@@ -100,12 +102,13 @@ process FIND_AND_MERGE_FASTQS {
         find . -name "._*" -print0 | xargs -0 rm -rf
         find `realpath ${parent_dir}` -type f -name ${label}*.fastq.gz > fastq_list.txt
         touch ${sample_id}.fastq
+        touch merged_list.txt 
         for i in `cat fastq_list.txt`;
         do
-            echo "now unzipping " \$i
+            echo "\$i" >> merged_list.txt 
             zcat \$i >> ${sample_id}.fastq
         done
-        if [[ `cat .command.out | wc -l` -eq `cat fastq_list.txt | wc -l` ]]; then
+        if [[ `cat merged_list.txt | wc -l` -eq `cat fastq_list.txt | wc -l` ]]; then
             gzip ${sample_id}.fastq
         else
             echo "Merging failed."
