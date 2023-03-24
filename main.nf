@@ -74,6 +74,9 @@ process FIND_AND_MERGE_FASTQS {
 	
 	tag "${sample_id}"
     publishDir params.merged_fastqs, mode: params.publishMode, overwite: true
+
+    errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
+    maxRetries 2
 	
 	input:
 	tuple val(label), val(sample_id), path(parent_dir)
@@ -94,14 +97,20 @@ process FIND_AND_MERGE_FASTQS {
         """
     else
         """
-        find `realpath ${parent_dir}` -type f -name ${label}*.fastq.gz > fastq_list.txt && \
-        touch ${sample_id}.fastq && \
+        find . -name "._*" -print0 | xargs -0 rm -rf
+        find `realpath ${parent_dir}` -type f -name ${label}*.fastq.gz > fastq_list.txt
+        touch ${sample_id}.fastq
         for i in `cat fastq_list.txt`;
         do
             echo "now unzipping " \$i
             zcat \$i >> ${sample_id}.fastq
-        done && \
-        gzip ${sample_id}.fastq
+        done
+        if [[ `cat .command.out | wc -l` -gt -eq `cat fastq_list.txt | wc -l` ]]; then
+            gzip ${sample_id}.fastq
+        else
+            echo "Merging failed."
+            exit 1
+        fi
         """
 }
 
@@ -116,6 +125,9 @@ process SAMPLE_QC {
 	
 	tag "${sample_id}"
     publishDir params.filtered_fastqs, mode: 'copy', overwite: true
+    
+    errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
+    maxretries 2
 	
 	input:
 	tuple path(fastq), val(sample_id)
@@ -159,6 +171,8 @@ process MAP_TO_REFSEQS {
 	
 	tag "${sample_id}"
     publishDir params.bams, mode: 'copy', overwite: true
+
+    errorStrategy 'ignore'
     
     cpus 4
 	
