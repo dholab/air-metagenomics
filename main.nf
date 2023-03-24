@@ -105,7 +105,7 @@ process FIND_AND_MERGE_FASTQS {
             echo "now unzipping " \$i
             zcat \$i >> ${sample_id}.fastq
         done
-        if [[ `cat .command.out | wc -l` -gt -eq `cat fastq_list.txt | wc -l` ]]; then
+        if [[ `cat .command.out | wc -l` -eq `cat fastq_list.txt | wc -l` ]]; then
             gzip ${sample_id}.fastq
         else
             echo "Merging failed."
