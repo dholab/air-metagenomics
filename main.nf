@@ -27,8 +27,25 @@ workflow {
         FIND_AND_MERGE_FASTQS.out
     )
 
+    FIND_NTC (
+        FIND_AND_MERGE_FASTQS.out
+    )
+
+    CONVERT_TO_FASTA (
+        SAMPLE_QC.out
+    )
+
+    REMOVE_CONTAMINANTS (
+        CONVERT_TO_FASTA.out
+    )
+
+    REMOVE_NTC (
+        REMOVE_CONTAMINANTS.out,
+        FIND_NTC.out
+    )
+
     MAP_TO_REFSEQS (
-        SAMPLE_QC.out,
+        REMOVE_NTC.out,
         ch_ref_seqs
     )
 	
@@ -99,7 +116,6 @@ process FIND_AND_MERGE_FASTQS {
         """
     else
         """
-        find . -name "._*" -print0 | xargs -0 rm -rf
         find `realpath ${parent_dir}` -type f -name ${label}*.fastq.gz > fastq_list.txt
         touch ${sample_id}.fastq
         touch merged_list.txt 
@@ -133,33 +149,138 @@ process SAMPLE_QC {
     maxretries 2
 	
 	input:
-	tuple path(fastq), val(sample_id)
+	tuple path(fasta), val(sample_id)
 	
 	output:
 	tuple path("*.fastq.gz"), val(sample_id)
+
+    when:
+    !sample_id.contains("NTC_")
 	
 	script:
     if ( params.ont == true )
         """
-        reformat.sh in=${fastq} \
+        reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
         mincalledquality=9 qin=33
         """
     else if( params.pacbio == true )
         """
-        reformat.sh in=${fastq} \
+        reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
         mincalledquality=9 qin=33
         """
     else 
         """
-        reformat.sh in=${fastq} \
+        reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
         mincalledquality=9 qin=33
         """
+
+}
+
+
+process FIND_NTC {
+
+    /*
+    */
+
+    tag "${sample_id}"
+
+    input:
+    tuple path(fastq), val(sample_id)
+
+    output:
+    path "NTC_*.fasta"
+
+    when:
+    sample_id.contains("NTC_")
+
+    script:
+    """
+    fastq_to_fasta.py ${fastq}
+    """
+
+}
+
+
+process CONVERT_TO_FASTA {
+
+    /*
+    */
+
+    input:
+    tuple path(fastq), val(sample_id)
+    
+    output:
+    tuple path("*.fasta"), val(sample_id)
+
+    script:
+    """
+    fastq_to_fasta.py ${fastq}
+    """
+}
+
+
+process REMOVE_CONTAMINANTS {
+
+    /*
+    map reads to NVD contaminant databases
+    return unmapped reads
+    this removes kit-ome and human sequences
+    */
+
+    cpus 8
+
+    input:
+    tuple path(fasta), val(sample_id)
+
+    output:
+	tuple path("${sample_id}_contaminants.fasta"), val(sample_id)
+
+    script:
+    """
+    minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \
+    ${params.contaminants} \
+    ${fasta} \
+    | reformat.sh unmappedonly=t in=stdin.sam \
+    ref=${params.contaminants} \
+    out=${sample_id}_contaminants.fasta
+    """
+
+}
+
+
+process REMOVE_NTC {
+
+    /*
+    map reads from sample to no-template water control reads
+    remove reads that map to sequences found in no template control
+    */
+
+    tag "${sample_id}"
+
+    cpus 8
+
+    input:
+    tuple path(fasta), val(sample_id)
+    path ntc
+
+    output:
+	tuple path("${sample_id}_ntc.fasta"), val(sample_id)
+
+    script:
+    """
+    minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \
+    ${ntc} \
+    ${fasta} \
+    | reformat.sh unmappedonly=t in=stdin.sam \
+    ref=$${ntc} \
+    out=${sample_id}_ntc.fasta
+    """
 
 }
 
@@ -180,7 +301,7 @@ process MAP_TO_REFSEQS {
     cpus 4
 	
 	input:
-	tuple path(fastq), val(sample_id)
+	tuple path(fasta), val(sample_id)
     each path(refseq)
 	
 	output:
@@ -191,7 +312,7 @@ process MAP_TO_REFSEQS {
     minimap2 \
     -ax map-ont \
     ${refseq} \
-    ${fastq} \
+    ${fasta} \
     --eqx \
     -t 3 \
     | reformat.sh \

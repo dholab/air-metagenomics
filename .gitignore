@@ -3,6 +3,8 @@ work/
 .nova/
 reads/
 results/
+resources/*.fa.gz
+resources/*test*
 
 .nextflow.log*
 .DS_Store
