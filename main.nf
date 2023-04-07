@@ -146,7 +146,7 @@ process SAMPLE_QC {
     publishDir params.filtered_fastqs, mode: 'copy', overwite: true
     
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
-    maxretries 2
+    maxRetries 2
 	
 	input:
 	tuple path(fasta), val(sample_id)
@@ -285,7 +285,7 @@ process REMOVE_NTC {
     ${ntc} \
     ${fasta} \
     | reformat.sh unmappedonly=t in=stdin.sam \
-    ref=$${ntc} \
+    ref=${ntc} \
     out=${sample_id}_ntc.fasta
     """
 
