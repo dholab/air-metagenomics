@@ -6,7 +6,7 @@ import gzip
 from Bio import SeqIO
 
 # Set the directory containing the gzipped FASTQ files
-fastq_dir = sys.argv[1]
+fastq_dir = os.getcwd()
 
 # Set the output directory for the converted FASTA files
 fasta_dir = os.getcwd()

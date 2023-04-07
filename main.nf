@@ -186,6 +186,12 @@ process SAMPLE_QC {
 process FIND_NTC {
 
     /*
+    Here we use filenames to identify which of the samples from your
+    sequencing run were negative, no-template controls. One of these
+    is required for each sequencing run and the associated workflow run.
+    We have written this workflow to be run once for each sequencing run,
+    and as such, it will produce errors if you put multiple sequencing
+    runs worth of samples and controls in the same samplesheet.
     */
 
     tag "${sample_id}"
@@ -201,7 +207,7 @@ process FIND_NTC {
 
     script:
     """
-    fastq_to_fasta.py ${fastq}
+    fastq_to_fasta.py
     """
 
 }
@@ -210,6 +216,7 @@ process FIND_NTC {
 process CONVERT_TO_FASTA {
 
     /*
+    To save space, FASTQs are converted to FASTAs after QC.
     */
 
     input:
@@ -220,7 +227,7 @@ process CONVERT_TO_FASTA {
 
     script:
     """
-    fastq_to_fasta.py ${fastq}
+    fastq_to_fasta.py
     """
 }
 
