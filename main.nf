@@ -17,6 +17,9 @@ workflow {
     
     ch_ref_seqs = Channel
         .fromPath( params.virus_ref )
+    
+    ch_contaminants = Channel
+        .fromPath( params.contaminants )
 	
 	// Workflow steps 
     FIND_AND_MERGE_FASTQS (
@@ -36,7 +39,8 @@ workflow {
     )
 
     REMOVE_CONTAMINANTS (
-        CONVERT_TO_FASTA.out
+        CONVERT_TO_FASTA.out,
+        ch_contaminants
     )
 
     REMOVE_NTC (
@@ -240,10 +244,13 @@ process REMOVE_CONTAMINANTS {
     this removes kit-ome and human sequences
     */
 
+    publishDir params.filtered_fastqs, mode: 'copy', overwite: true
+
     cpus 8
 
     input:
     tuple path(fasta), val(sample_id)
+    path contaminants
 
     output:
 	tuple path("${sample_id}_contaminants.fasta"), val(sample_id)
@@ -251,10 +258,10 @@ process REMOVE_CONTAMINANTS {
     script:
     """
     minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \
-    ${params.contaminants} \
+    ${contaminants} \
     ${fasta} \
     | reformat.sh unmappedonly=t in=stdin.sam \
-    ref=${params.contaminants} \
+    ref=${contaminants} \
     out=${sample_id}_contaminants.fasta
     """
 
@@ -267,6 +274,9 @@ process REMOVE_NTC {
     map reads from sample to no-template water control reads
     remove reads that map to sequences found in no template control
     */
+    
+    publishDir params.filtered_fastqs, mode: 'copy', overwite: true
+
 
     tag "${sample_id}"
 
