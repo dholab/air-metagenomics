@@ -19,8 +19,10 @@ RUN pip3 install --upgrade pip && \
 RUN wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.11.0/sratoolkit.2.11.0-ubuntu64.tar.gz && \
     tar -xzf sratoolkit.2.11.0-ubuntu64.tar.gz && \
     rm sratoolkit.2.11.0-ubuntu64.tar.gz && \
-    cd sratoolkit.2.11.0-ubuntu64/bin && \
-    cp fasterq-dump /usr/local/bin
+    cp -r sratoolkit.2.11.0-ubuntu64 /usr/local/bin
+
+# Tinker with PATH to include SRA-tools
+ENV PATH=/usr/local/bin/sratoolkit.2.11.0-ubuntu64/bin:$PATH
 
 # Install cutadapt
 RUN pip3 install cutadapt
