@@ -214,14 +214,15 @@ process FIND_NTC {
     tuple path(fastq), val(sample_id)
 
     output:
-    path "NTC_*.fasta"
+    path "NTC_*.fasta.gz"
 
     when:
     sample_id.contains("NTC_")
 
     script:
     """
-    fastq_to_fasta.py
+    fastq_to_fasta.py \
+    && gzip ${sample_id}_filtered.fasta
     """
 
 }
@@ -240,11 +241,12 @@ process CONVERT_TO_FASTA {
     tuple path(fastq), val(sample_id)
     
     output:
-    tuple path("*.fasta"), val(sample_id)
+    tuple path("*.fasta.gz"), val(sample_id)
 
     script:
     """
-    fastq_to_fasta.py
+    fastq_to_fasta.py \
+    && gzip ${sample_id}_filtered.fasta
     """
 }
 
@@ -292,24 +294,24 @@ process REMOVE_CONTAMINANTS {
     path contaminants
 
     output:
-	tuple path("${sample_id}_contam_removed.fasta"), val(sample_id)
+	tuple path("${sample_id}_contam_removed.fasta.gz"), val(sample_id)
 
     script:
     """
-    mv ${fasta} tmp.fasta
+    mv ${fasta} tmp.fasta.gz
     ls `realpath contam_ref/*.fa.gz` > contaminant_file_paths.txt
     for i in `cat contaminant_file_paths.txt`; 
     do
         basename=`basename \$i`
         echo "Now mapping to " \$basename
-        mv tmp.fasta tmp_\$basename.fasta
+        mv tmp.fasta.gz tmp_\$basename.fasta.gz
         minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \$i \
-        tmp_\$basename.fasta \
+        tmp_\$basename.fasta.gz \
         | reformat.sh unmappedonly=t in=stdin.sam \
         ref=\$i \
-        out=tmp.fasta
+        out=tmp.fasta.gz
     done && \
-    mv tmp.fasta ${sample_id}_contam_removed.fasta
+    mv tmp.fasta.gz ${sample_id}_contam_removed.fasta.gz
     """
 
 }
@@ -334,7 +336,7 @@ process REMOVE_NTC {
     path ntc
 
     output:
-	tuple path("${sample_id}_ntc.fasta"), val(sample_id)
+	tuple path("${sample_id}_ntc.fasta.gz"), val(sample_id)
 
     script:
     """
@@ -343,7 +345,7 @@ process REMOVE_NTC {
     ${fasta} \
     | reformat.sh unmappedonly=t in=stdin.sam \
     ref=${ntc} \
-    out=${sample_id}_ntc.fasta
+    out=${sample_id}_ntc.fasta.gz
     """
 
 }
