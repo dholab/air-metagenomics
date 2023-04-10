@@ -121,12 +121,12 @@ process FIND_AND_MERGE_FASTQS {
     if ( label.startsWith("SRR") )
         """
         prefetch ${label}
-	    fasterq-dump ${label}/${label}.sra \
-	    --concatenate-reads --skip-technical --quiet && \
-	    gzip ${label}.sra.fastq
-	    mv ${label}.sra.fastq.gz ${sample_id}.fastq.gz
-	    rm -rf ${label}/
-	    rm -rf fasterq.tmp.*
+        fasterq-dump ${label}/${label}.sra \
+        --concatenate-reads --skip-technical --quiet && \
+        gzip ${label}.sra.fastq
+        mv ${label}.sra.fastq.gz ${sample_id}.fastq.gz
+        rm -rf ${label}/
+        rm -rf fasterq.tmp.*
         """
     else
         """
