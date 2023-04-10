@@ -19,7 +19,9 @@ workflow {
         .fromPath( params.virus_ref )
     
     ch_contaminants = Channel
-        .fromPath( params.contaminants )
+        .fromPath( params.contaminants_tar )
+        // .splitFasta( by: 10, file: true )
+        // .collect()
 	
 	// Workflow steps 
     FIND_AND_MERGE_FASTQS (
@@ -38,9 +40,13 @@ workflow {
         SAMPLE_QC.out
     )
 
+    DECOMPRESS_CONTAMINANTS (
+        ch_contaminants
+    )
+
     REMOVE_CONTAMINANTS (
         CONVERT_TO_FASTA.out,
-        ch_contaminants
+        DECOMPRESS_CONTAMINANTS.out
     )
 
     REMOVE_NTC (
@@ -71,10 +77,14 @@ else {
 	params.publishMode = 'copy'
 }
 
+// Resources subdirectories
+params.contam_ref = params.resources + "/contam_ref"
+
 // Results subdirectories
 params.merged_fastqs = params.results + "/1_merged_fastqs"
 params.filtered_fastqs = params.results + "/2_filtered_fastqs"
-params.bams = params.results + "/3_alignment_maps"
+params.fasta_cleaning = params.results + "/3_cleaned_fastas"
+params.bams = params.results + "/4_alignment_maps"
 
 // --------------------------------------------------------------- //
 
@@ -147,7 +157,7 @@ process SAMPLE_QC {
     */
 	
 	tag "${sample_id}"
-    publishDir params.filtered_fastqs, mode: 'copy', overwite: true
+    publishDir params.filtered_fastqs, mode: 'copy'
     
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
@@ -167,21 +177,21 @@ process SAMPLE_QC {
         reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 qin=33
+        mincalledquality=9 qin=33 minlength=200 
         """
     else if( params.pacbio == true )
         """
         reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 qin=33
+        mincalledquality=9 qin=33 minlength=200 
         """
     else 
         """
         reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 qin=33
+        mincalledquality=9 qin=33 minlength=200 
         """
 
 }
@@ -223,6 +233,9 @@ process CONVERT_TO_FASTA {
     To save space, FASTQs are converted to FASTAs after QC.
     */
 
+    tag "${sample_id}"
+    publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
+
     input:
     tuple path(fastq), val(sample_id)
     
@@ -236,6 +249,31 @@ process CONVERT_TO_FASTA {
 }
 
 
+process DECOMPRESS_CONTAMINANTS {
+
+    /*
+    A tarball of potential library contaminants, including PhiX adapters,
+    host reads, metagenomic contaminants, etc. is included with this workflow.
+    To access them, this process decompresses them and sends them to downsream
+    processes.
+    */
+
+    publishDir params.resources, mode: 'copy', overwrite: false
+
+    input:
+    path tar
+
+    output:
+    path "contam_ref/"
+
+    script:
+    """
+    tar -xvf ${tar}
+    """
+
+}
+
+
 process REMOVE_CONTAMINANTS {
 
     /*
@@ -244,7 +282,8 @@ process REMOVE_CONTAMINANTS {
     this removes kit-ome and human sequences
     */
 
-    publishDir params.filtered_fastqs, mode: 'copy', overwite: true
+    tag "${sample_id}"
+    publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
 
     cpus 8
 
@@ -253,16 +292,24 @@ process REMOVE_CONTAMINANTS {
     path contaminants
 
     output:
-	tuple path("${sample_id}_contaminants.fasta"), val(sample_id)
+	tuple path("${sample_id}_contam_removed.fasta"), val(sample_id)
 
     script:
     """
-    minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \
-    ${contaminants} \
-    ${fasta} \
-    | reformat.sh unmappedonly=t in=stdin.sam \
-    ref=${contaminants} \
-    out=${sample_id}_contaminants.fasta
+    mv ${fasta} tmp.fasta
+    ls `realpath contam_ref/*.fa.gz` > contaminant_file_paths.txt
+    for i in `cat contaminant_file_paths.txt`; 
+    do
+        basename=`basename \$i`
+        echo "Now mapping to " \$basename
+        mv tmp.fasta tmp_\$basename.fasta
+        minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \$i \
+        tmp_\$basename.fasta \
+        | reformat.sh unmappedonly=t in=stdin.sam \
+        ref=\$i \
+        out=tmp.fasta
+    done && \
+    mv tmp.fasta ${sample_id}_contam_removed.fasta
     """
 
 }
@@ -275,8 +322,8 @@ process REMOVE_NTC {
     remove reads that map to sequences found in no template control
     */
     
-    publishDir params.filtered_fastqs, mode: 'copy', overwite: true
-
+    tag "${sample_id}"
+    publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
 
     tag "${sample_id}"
 

@@ -5,6 +5,7 @@ reads/
 results/
 resources/*.fa.gz
 resources/*test*
+resources/contam_ref/
 
 .nextflow.log*
 .DS_Store
