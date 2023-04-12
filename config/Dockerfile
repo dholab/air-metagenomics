@@ -8,21 +8,29 @@ ENV TZ America/New_York
 # Install necessary packages
 RUN apt-get update && \
     apt-get install -y python-is-python3 python3-pip wget build-essential libz-dev libbz2-dev liblzma-dev \
-    libncurses5-dev libncursesw5-dev libcurl4-openssl-dev libssl-dev zlib1g-dev default-jre \
+    libncurses5-dev libncursesw5-dev libcurl4-openssl-dev libssl-dev zlib1g-dev curl default-jre \
     samtools bcftools vcftools libhts-dev
 
 # Install python packages
 RUN pip3 install --upgrade pip && \
     pip3 install numpy pandas scipy cython pysam jupyter biopython
 
+# Install Miniconda
+RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b && \
+    rm Miniconda3-latest-Linux-x86_64.sh
+
+# Tinker with PATH to include SRA-tools
+ENV PATH=/miniconda/bin:$PATH
+
+# Install sra-tools in the base environment
+RUN conda install -y -c bioconda sra-tools=2.10.1
+
 # Install sra-tools
 RUN wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.11.0/sratoolkit.2.11.0-ubuntu64.tar.gz && \
     tar -xzf sratoolkit.2.11.0-ubuntu64.tar.gz && \
     rm sratoolkit.2.11.0-ubuntu64.tar.gz && \
     cp -r sratoolkit.2.11.0-ubuntu64 /usr/local/bin
-
-# Tinker with PATH to include SRA-tools
-ENV PATH=/usr/local/bin/sratoolkit.2.11.0-ubuntu64/bin:$PATH
 
 # Install cutadapt
 RUN pip3 install cutadapt

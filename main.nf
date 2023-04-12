@@ -222,7 +222,7 @@ process FIND_NTC {
     script:
     """
     fastq_to_fasta.py \
-    && gzip ${sample_id}_filtered.fasta
+    && gzip ${sample_id}.fasta
     """
 
 }
