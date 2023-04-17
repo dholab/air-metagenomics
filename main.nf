@@ -13,7 +13,10 @@ workflow {
 	ch_reads = Channel
         .fromPath( params.samplesheet )
         .splitCsv( header: true )
-        .map { row -> tuple( row.raw_read_label, row.sample_id, row.parent_dir ) }
+        .map { row -> 
+            def parent_dir = row.parent_dir?.trim() ?: '/scratch'
+            tuple( row.raw_read_label, row.sample_id, parent_dir ) 
+        }
     
     ch_ref_seqs = Channel
         .fromPath( params.virus_ref )
@@ -123,8 +126,8 @@ process FIND_AND_MERGE_FASTQS {
         prefetch ${label}
         fasterq-dump ${label}/${label}.sra \
         --concatenate-reads --skip-technical --quiet && \
-        gzip ${label}.sra.fastq
-        mv ${label}.sra.fastq.gz ${sample_id}.fastq.gz
+        gzip --no-name ${label}.fastq
+        mv ${label}.fastq.gz ${sample_id}.fastq.gz
         rm -rf ${label}/
         rm -rf fasterq.tmp.*
         """

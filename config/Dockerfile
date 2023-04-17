@@ -23,14 +23,11 @@ RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.
 # Tinker with PATH to include SRA-tools
 ENV PATH=/miniconda/bin:$PATH
 
-# Install sra-tools in the base environment
-RUN conda install -y -c bioconda sra-tools=2.10.1
+# Create a new conda environment for sra-tools
+RUN conda create -y --name sra_env -c defaults -c bioconda -c anaconda -c conda-forge sra-tools=3.0.3
 
-# Install sra-tools
-RUN wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.11.0/sratoolkit.2.11.0-ubuntu64.tar.gz && \
-    tar -xzf sratoolkit.2.11.0-ubuntu64.tar.gz && \
-    rm sratoolkit.2.11.0-ubuntu64.tar.gz && \
-    cp -r sratoolkit.2.11.0-ubuntu64 /usr/local/bin
+# Activate the sra_env environment and add sra-tools to the path
+ENV PATH=/miniconda/envs/sra_env/bin:$PATH
 
 # Install cutadapt
 RUN pip3 install cutadapt
