@@ -145,13 +145,6 @@ process FIND_AND_MERGE_FASTQS {
             exit 1
         fi
         """
-    
-    afterScript = {
-        def sample_id = input.sample_id
-        """
-        nextflow log ${sample_id}.fastq.gz --no-tstamp
-        """
-    }
 
 }
 
@@ -230,7 +223,7 @@ process FIND_NTC {
     script:
     """
     fastq_to_fasta.py \
-    && gzip ${sample_id}.fasta
+    && gzip --no-name ${sample_id}.fasta
     """
 
 }
@@ -254,7 +247,7 @@ process CONVERT_TO_FASTA {
     script:
     """
     fastq_to_fasta.py \
-    && gzip ${sample_id}_filtered.fasta
+    && gzip --no-name ${sample_id}_filtered.fasta
     """
 }
 
@@ -274,9 +267,10 @@ process DECOMPRESS_CONTAMINANTS {
     path tar
 
     output:
-    path "contam_ref/"
+    path "${folder_name}"
 
     script:
+    folder_name = tar.getSimpleName()
     """
     tar -xvf ${tar}
     """
@@ -307,7 +301,7 @@ process REMOVE_CONTAMINANTS {
     script:
     """
     mv ${fasta} tmp.fasta.gz
-    ls `realpath contam_ref/*.fa.gz` > contaminant_file_paths.txt
+    ls `realpath ${contaminants}/*.fa.gz` > contaminant_file_paths.txt
     for i in `cat contaminant_file_paths.txt`; 
     do
         basename=`basename \$i`

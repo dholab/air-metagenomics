@@ -6,6 +6,7 @@ results/
 resources/*.fa.gz
 resources/*test*
 resources/contam_ref/
+resources/*.tar.gz
 
 .nextflow.log*
 .DS_Store
