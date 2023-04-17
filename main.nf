@@ -146,10 +146,12 @@ process FIND_AND_MERGE_FASTQS {
         fi
         """
     
-    afterScript:
-    """
-    nextflow log ${sample_id}.fastq.gz --no-tstamp
-    """
+    afterScript = {
+        def sample_id = input.sample_id
+        """
+        nextflow log ${sample_id}.fastq.gz --no-tstamp
+        """
+    }
 
 }
 
