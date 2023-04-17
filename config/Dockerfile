@@ -11,10 +11,6 @@ RUN apt-get update && \
     libncurses5-dev libncursesw5-dev libcurl4-openssl-dev libssl-dev zlib1g-dev curl default-jre \
     samtools bcftools vcftools libhts-dev
 
-# Install python packages
-RUN pip3 install --upgrade pip && \
-    pip3 install numpy pandas scipy cython pysam jupyter biopython
-
 # Install Miniconda
 RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b && \
@@ -29,13 +25,19 @@ RUN conda create -y --name sra_env -c defaults -c bioconda -c anaconda -c conda-
 # Activate the sra_env environment and add sra-tools to the path
 ENV PATH=/miniconda/envs/sra_env/bin:$PATH
 
+# Install python packages
+RUN pip3 install biopython
+
 # Install cutadapt
 RUN pip3 install cutadapt
 
+# Make sure the python path is resolved despite using conda and pip
+ENV PYTHONPATH="${PYTHONPATH}:/usr/local/lib/python3.10/site-packages"
+
 # Install bbmap
-RUN wget https://downloads.sourceforge.net/project/bbmap/BBMap_38.90.tar.gz && \
-    tar -xzf BBMap_38.90.tar.gz && \
-    rm BBMap_38.90.tar.gz && \
+RUN wget https://downloads.sourceforge.net/project/bbmap/BBMap_39.01.tar.gz && \
+    tar -xzf BBMap_39.01.tar.gz && \
+    rm BBMap_39.01.tar.gz && \
     cd bbmap && \
     cp -r * /usr/local/bin
 
