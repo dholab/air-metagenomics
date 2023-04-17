@@ -139,12 +139,18 @@ process FIND_AND_MERGE_FASTQS {
             zcat \$i >> ${sample_id}.fastq
         done
         if [[ `cat merged_list.txt | wc -l` -eq `cat fastq_list.txt | wc -l` ]]; then
-            gzip ${sample_id}.fastq
+            gzip --no-name ${sample_id}.fastq
         else
             echo "Merging failed."
             exit 1
         fi
         """
+    
+    afterScript:
+    """
+    nextflow log ${sample_id}.fastq.gz --no-tstamp
+    """
+
 }
 
 
