@@ -245,7 +245,7 @@ process FIND_NTC {
         done
         gzip --no_name NTC_merged.fastq
     fi
-    fastq_to_fasta.py ${task.cpus}
+    fastq_to_fasta.py ${task.cpus} ${params.seq_batch_size}
     """
 
 }
@@ -273,7 +273,7 @@ process CONVERT_TO_FASTA {
 
     script:
     """
-    fastq_to_fasta.py ${task.cpus}
+    fastq_to_fasta.py ${task.cpus} ${params.seq_batch_size}
     """
 }
 
