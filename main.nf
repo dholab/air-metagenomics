@@ -318,7 +318,7 @@ process REMOVE_CONTAMINANTS {
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
 
-    // cpus 8
+    cpus params.max_cpus
 
     input:
     tuple path(fasta), val(sample_id)
@@ -358,7 +358,7 @@ process REMOVE_NTC {
     tag "${sample_id}"
     publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
 
-    // cpus 8
+    cpus params.max_cpus
 
     input:
     tuple path(fasta), val(sample_id)
