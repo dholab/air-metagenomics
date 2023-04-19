@@ -44,6 +44,12 @@ workflow {
         SAMPLE_QC.out
     )
 
+    // DOWNLOAD_CONTAMINANTS ()
+
+    // DECOMPRESS_CONTAMINANTS (
+    //     DOWNLOAD_CONTAMINANTS.out
+    // )
+
     DECOMPRESS_CONTAMINANTS (
         ch_contaminants
     )
@@ -92,7 +98,7 @@ else {
 params.contam_ref = params.resources + "/contam_ref"
 
 // Results subdirectories
-params.merged_fastqs = params.results + "/1_merged_fastqs"
+params.merged_fastqs = params.results + "/1_raw_fastqs"
 params.filtered_fastqs = params.results + "/2_filtered_fastqs"
 params.fasta_cleaning = params.results + "/3_cleaned_fastas"
 params.bams = params.results + "/4_alignment_maps"
@@ -278,6 +284,19 @@ process CONVERT_TO_FASTA {
 }
 
 
+// process DOWNLOAD_CONTAMINANTS {
+
+//     out:
+//     path tar
+
+//     script:
+//     """
+//     curl
+//     """
+
+// }
+
+
 process DECOMPRESS_CONTAMINANTS {
 
     /*
@@ -286,8 +305,6 @@ process DECOMPRESS_CONTAMINANTS {
     To access them, this process decompresses them and sends them to downsream
     processes.
     */
-
-    publishDir params.resources, mode: 'copy', overwrite: false
 
     input:
     path tar
@@ -334,10 +351,13 @@ process REMOVE_CONTAMINANTS {
     for i in `cat contaminant_file_paths.txt`; 
     do
         basename=`basename \$i .fa.gz`
+        echo ""
         echo "Now mapping to " \$basename
+        echo "-----------------------------"
+        echo ""
         mv tmp.fasta.gz tmp_\$basename.fasta.gz
         minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \$i \
-        tmp_\$basename.fasta.gz \
+        `realpath tmp_\$basename.fasta.gz` \
         | reformat.sh unmappedonly=t in=stdin.sam \
         ref=\$i \
         out=tmp.fasta.gz
