@@ -213,8 +213,6 @@ process FIND_NTC {
     runs worth of samples and controls in the same samplesheet.
     */
 
-    tag "${sample_id}"
-    
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
 
@@ -346,6 +344,7 @@ process REMOVE_NTC {
     remove reads that map to sequences found in no template control
     */
     
+    tag "${sample_id}"
     publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
 
     // cpus 8
