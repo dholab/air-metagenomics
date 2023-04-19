@@ -216,6 +216,8 @@ process FIND_NTC {
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
 
+    cpus 2
+
     input:
     path ntc_files
 
@@ -236,7 +238,7 @@ process FIND_NTC {
         done
         gzip --no_name NTC_merged.fastq
     fi
-    fastq_to_fasta.py
+    fastq_to_fasta.py ${task.cpus}
     """
 
 }
@@ -254,6 +256,8 @@ process CONVERT_TO_FASTA {
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
 
+    cpus 4
+
     input:
     tuple path(fastq), val(sample_id)
     
@@ -262,7 +266,7 @@ process CONVERT_TO_FASTA {
 
     script:
     """
-    fastq_to_fasta.py
+    fastq_to_fasta.py ${task.cpus}
     """
 }
 
