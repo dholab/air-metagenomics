@@ -15,12 +15,16 @@ fasta_dir = os.getcwd()
 for filename in os.listdir(fastq_dir):
     if filename.endswith(".fastq.gz"):
         # Construct the paths to the input and output files
-        input_file = os.path.join(fastq_dir, filename)
-        output_file = os.path.join(fasta_dir, filename.replace(".fastq.gz", ".fasta"))
+        input_file = os.path.realpath(filename)
+        output_file = os.path.join(fasta_dir, filename.replace(".fastq.gz", ".fasta.gz"))
 
         # Open the input and output files
-        with gzip.open(input_file, "rt") as in_handle, open(
-            output_file, "w"
+        with gzip.open(input_file, "rt") as in_handle, gzip.open(
+            output_file, "wt"
         ) as out_handle:
             # Use BioPython to convert the gzipped FASTQ file to FASTA format
             SeqIO.convert(in_handle, "fastq", out_handle, "fasta")
+
+# Close the input and output files
+in_handle.close()
+out_handle.close()

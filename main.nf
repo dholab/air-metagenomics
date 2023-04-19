@@ -23,8 +23,6 @@ workflow {
     
     ch_contaminants = Channel
         .fromPath( params.contaminants_tar )
-        // .splitFasta( by: 10, file: true )
-        // .collect()
 	
 	// Workflow steps 
     FIND_AND_MERGE_FASTQS (
@@ -37,6 +35,9 @@ workflow {
 
     FIND_NTC (
         FIND_AND_MERGE_FASTQS.out
+        .map { fasta, id -> fasta }
+        .filter { it.getSimpleName().contains("NTC_") }
+        .collect()
     )
 
     CONVERT_TO_FASTA (
@@ -195,7 +196,7 @@ process SAMPLE_QC {
         reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 qin=33 minlength=200 
+        mincalledquality=9 qin=33 minlength=100 
         """
 
 }
@@ -213,20 +214,31 @@ process FIND_NTC {
     */
 
     tag "${sample_id}"
+    
+    errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
+    maxRetries 2
 
     input:
-    tuple path(fastq), val(sample_id)
+    path ntc_files
 
     output:
     path "NTC_*.fasta.gz"
 
-    when:
-    sample_id.contains("NTC_")
-
     script:
     """
-    fastq_to_fasta.py \
-    && gzip --no-name ${sample_id}.fasta
+    find -L . -maxdepth 1 -name "NTC_*" -type f -print > negative_controls.txt
+    if [[ `wc -l < negative_controls.txt` -gt 1 ]];
+    then
+        touch NTC_merged.fastq
+        for i in `cat negative_controls.txt`;
+        do
+            echo "Merging " \$i
+            zcat \$i > NTC_merged.fastq && \
+            rm \$i
+        done
+        gzip --no_name NTC_merged.fastq
+    fi
+    fastq_to_fasta.py
     """
 
 }
@@ -240,6 +252,9 @@ process CONVERT_TO_FASTA {
 
     tag "${sample_id}"
     publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
+    
+    errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
+    maxRetries 2
 
     input:
     tuple path(fastq), val(sample_id)
@@ -249,8 +264,7 @@ process CONVERT_TO_FASTA {
 
     script:
     """
-    fastq_to_fasta.py \
-    && gzip --no-name ${sample_id}_filtered.fasta
+    fastq_to_fasta.py
     """
 }
 
@@ -292,11 +306,14 @@ process REMOVE_CONTAMINANTS {
     tag "${sample_id}"
     publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
 
-    cpus 8
+    errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
+    maxRetries 2
+
+    // cpus 8
 
     input:
     tuple path(fasta), val(sample_id)
-    path contaminants
+    each path(contaminants)
 
     output:
 	tuple path("${sample_id}_contam_removed.fasta.gz"), val(sample_id)
@@ -307,7 +324,7 @@ process REMOVE_CONTAMINANTS {
     ls `realpath ${contaminants}/*.fa.gz` > contaminant_file_paths.txt
     for i in `cat contaminant_file_paths.txt`; 
     do
-        basename=`basename \$i`
+        basename=`basename \$i .fa.gz`
         echo "Now mapping to " \$basename
         mv tmp.fasta.gz tmp_\$basename.fasta.gz
         minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \$i \
@@ -329,16 +346,13 @@ process REMOVE_NTC {
     remove reads that map to sequences found in no template control
     */
     
-    tag "${sample_id}"
     publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
 
-    tag "${sample_id}"
-
-    cpus 8
+    // cpus 8
 
     input:
     tuple path(fasta), val(sample_id)
-    path ntc
+    each path(ntc)
 
     output:
 	tuple path("${sample_id}_ntc.fasta.gz"), val(sample_id)
@@ -367,7 +381,8 @@ process MAP_TO_REFSEQS {
 	tag "${sample_id}"
     publishDir params.bams, mode: 'copy', overwite: true
 
-    errorStrategy 'ignore'
+    errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
+    maxRetries 2
     
     cpus 4
 	
