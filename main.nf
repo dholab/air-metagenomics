@@ -246,7 +246,7 @@ process FIND_NTC {
         for i in `cat negative_controls.txt`;
         do
             echo "Merging " \$i
-            zcat \$i > NTC_merged.fastq && \
+            zcat \$i >> NTC_merged.fastq && \
             rm \$i
         done
         gzip --no_name NTC_merged.fastq
