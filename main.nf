@@ -73,6 +73,13 @@ workflow {
 // --------------------------------------------------------------- //
 // Additional parameters that are derived from parameters set in nextflow.config
 
+// Defining number of cpus to use base on execution environment
+if ( workflow.profile == "hpc_cluster" ){
+	params.max_cpus = executor.cpus
+} else {
+	params.max_cpus = params.max_local_cpus
+}
+
 // specifying whether to run in low disk mode
 if( params.low_disk_mode == true ) {
 	params.publishMode = 'symlink'
@@ -256,7 +263,7 @@ process CONVERT_TO_FASTA {
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
 
-    cpus 4
+    cpus params.max_cpus
 
     input:
     tuple path(fastq), val(sample_id)
