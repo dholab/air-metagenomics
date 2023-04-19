@@ -98,9 +98,9 @@ else {
 params.contam_ref = params.resources + "/contam_ref"
 
 // Results subdirectories
-params.merged_fastqs = params.results + "/1_raw_fastqs"
-params.filtered_fastqs = params.results + "/2_filtered_fastqs"
-params.fasta_cleaning = params.results + "/3_cleaned_fastas"
+params.raw_reads = params.results + "/1_raw_reads"
+params.filtered_reads = params.results + "/2_filtered_reads"
+params.fasta_cleaning = params.results + "/3_cleaned_reads"
 params.bams = params.results + "/4_alignment_maps"
 
 // --------------------------------------------------------------- //
@@ -121,7 +121,7 @@ process FIND_AND_MERGE_FASTQS {
     */ 
 	
 	tag "${sample_id}"
-    publishDir params.merged_fastqs, mode: params.publishMode, overwite: true
+    publishDir params.raw_reads, mode: params.publishMode, overwite: true
 
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
@@ -175,7 +175,7 @@ process SAMPLE_QC {
     */
 	
 	tag "${sample_id}"
-    publishDir params.filtered_fastqs, mode: 'copy'
+    publishDir params.filtered_reads, mode: 'copy'
     
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
@@ -283,6 +283,7 @@ process CONVERT_TO_FASTA {
     ${task.cpus} \
     ${params.seq_batch_size}
     """
+
 }
 
 
@@ -455,6 +456,7 @@ process MAP_TO_REFSEQS {
     out=${sample_id}_filtered.bam \
     mappedonly=t
 	"""
+
 }
 
 
