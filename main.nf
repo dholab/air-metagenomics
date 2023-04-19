@@ -433,7 +433,7 @@ process MAP_TO_REFSEQS {
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
     
-    cpus 4
+    cpus params.max_cpus
 	
 	input:
 	tuple path(fasta), val(sample_id)
