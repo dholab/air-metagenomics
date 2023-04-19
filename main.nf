@@ -279,7 +279,9 @@ process CONVERT_TO_FASTA {
 
     script:
     """
-    fastq_to_fasta.py ${task.cpus} ${params.seq_batch_size}
+    fastq_to_fasta.py \
+    ${task.cpus} \
+    ${params.seq_batch_size}
     """
 }
 
@@ -310,12 +312,12 @@ process DECOMPRESS_CONTAMINANTS {
     path tar
 
     output:
-    path "${folder_name}"
+    path "*.fa.gz"
 
     script:
     folder_name = tar.getSimpleName()
     """
-    tar -xvf ${tar}
+    tar -xvzf ${tar} && mv ${folder_name}/*.fa.gz ./
     """
 
 }
@@ -339,26 +341,40 @@ process REMOVE_CONTAMINANTS {
 
     input:
     tuple path(fasta), val(sample_id)
-    each path(contaminants)
+    each path(contaminant_files)
 
     output:
 	tuple path("${sample_id}_contam_removed.fasta.gz"), val(sample_id)
 
     script:
     """
-    mv ${fasta} tmp.fasta.gz
-    ls `realpath ${contaminants}/*.fa.gz` > contaminant_file_paths.txt
-    for i in `cat contaminant_file_paths.txt`; 
+    ls `realpath *.fa.gz` > contaminant_files.txt
+
+    first=`head -n 1 contaminant_files.txt`
+    basename=`basename \$first .fa.gz`
+    echo ""
+    echo ""
+    echo "Now mapping to" \$basename
+    echo "-----------------------------"
+    echo ""
+    minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \$first \
+    ${fasta} \
+    | reformat.sh unmappedonly=t in=stdin.sam \
+    ref=\$first \
+    out=tmp.fasta.gz
+
+    for i in `tail -n +2 contaminant_files.txt`; 
     do
         basename=`basename \$i .fa.gz`
+        mv tmp.fasta.gz tmp_\$basename.fasta.gz
         echo ""
-        echo "Now mapping to " \$basename
+        echo ""
+        echo "Now mapping to" \$basename
         echo "-----------------------------"
         echo ""
-        mv tmp.fasta.gz tmp_\$basename.fasta.gz
         minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \$i \
-        `realpath tmp_\$basename.fasta.gz` \
-        | reformat.sh unmappedonly=t in=stdin.sam \
+        tmp_\$basename.fasta.gz \
+        | reformat.sh unmappedonly=t overwrite=t in=stdin.sam \
         ref=\$i \
         out=tmp.fasta.gz
     done && \
@@ -377,6 +393,8 @@ process REMOVE_NTC {
     
     tag "${sample_id}"
     publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
+
+    errorStrategy 'ignore'
 
     cpus params.max_cpus
 
