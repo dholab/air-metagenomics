@@ -264,7 +264,7 @@ process CONVERT_TO_FASTA {
     */
 
     tag "${sample_id}"
-    publishDir params.fasta_cleaning, mode: params.publishMode, overwrite: true
+    publishDir params.filtered_reads, mode: params.publishMode, overwrite: true
     
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
