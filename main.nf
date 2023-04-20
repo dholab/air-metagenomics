@@ -61,6 +61,19 @@ workflow {
         REMOVE_NTC.out,
         ch_ref_seqs
     )
+
+    RECORD_HITS (
+        MAP_TO_REFSEQS.out
+    )
+
+    MAKE_VIRUS_LOOKUP (
+        ch_ref_seqs
+    )
+
+    GENERATE_PIVOT_TABLE (
+        RECORD_HITS.out.collect(),
+        MAKE_VIRUS_LOOKUP.out
+    )
 	
 	
 }
@@ -95,6 +108,7 @@ params.raw_reads = params.results + "/1_raw_reads"
 params.filtered_reads = params.results + "/2_filtered_reads"
 params.fasta_cleaning = params.results + "/3_cleaned_reads"
 params.bams = params.results + "/4_alignment_maps"
+params.pivot_table = params.results + "/5_pathogen_hits"
 
 // --------------------------------------------------------------- //
 
@@ -454,6 +468,77 @@ process MAP_TO_REFSEQS {
     out=${sample_id}_filtered.bam \
     mappedonly=t
 	"""
+
+}
+
+
+process RECORD_HITS {
+
+    /*
+    Here, the workflow uses SAMtools to record 1) Which viruses were mapped to, and
+    2) How many reads, from zero up, were mapped to each one. These "hits" will be 
+    used to generate a multi-sample pivot table for this sequencing run downstream.
+    */
+    
+    input:
+	tuple path("*.bam*"), val(sample_id)
+
+    output:
+    path "*_hits.txt"
+
+    script:
+    """
+    samtools sort ${bam} > ${sample_id}_sorted.bam
+    samtools index ${sample_id}_sorted.bam
+    samtools idxstats ${sample_id}_sorted.bam | cut -f 1,3 > ${sample_id}_hits.txt
+    """
+
+}
+
+
+process MAKE_VIRUS_LOOKUP {
+
+    /*
+    In the process, a script parses each FASTA defline to record the NCBI RefSeq
+    accession and a common name for each virus. These pieces of information will be 
+    used to make the pivot table more readable downstream.
+    */
+
+    input:
+    path fasta
+
+    output:
+    path "*.csv"
+
+    script:
+    """
+    make_virus_lookup.R ${fasta}
+    """
+
+}
+
+
+process GENERATE_PIVOT_TABLE {
+
+    /*
+    In the process, the workflow completes by recording the viruses found in a 
+    given sequencing run's samples in a human-readable Excel file.
+    */
+
+    publishDir params.pivot_table, mode: 'copy', overwite: true
+    
+    input:
+    path hit_files
+    path virus_lookup
+
+    output:
+    path "*.xlsx"
+
+    script:
+    seq_run_name = file(params.samplesheet).getSimpleName()
+    """
+    make_pathogen_hit_pivot.R ${virus_lookup} ${seq_run_name}
+    """
 
 }
 
