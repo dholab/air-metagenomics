@@ -249,7 +249,7 @@ process FIND_NTC {
             zcat \$i >> NTC_merged.fastq && \
             rm \$i
         done
-        gzip --no_name NTC_merged.fastq
+        gzip --no-name NTC_merged.fastq
     fi
     fastq_to_fasta.py ${task.cpus} ${params.seq_batch_size}
     """
