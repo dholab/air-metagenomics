@@ -20,9 +20,6 @@ workflow {
     
     ch_ref_seqs = Channel
         .fromPath( params.virus_ref )
-    
-    ch_contaminants = Channel
-        .fromPath( params.contaminants_tar )
 	
 	// Workflow steps 
     FIND_AND_MERGE_FASTQS (
@@ -44,14 +41,10 @@ workflow {
         SAMPLE_QC.out
     )
 
-    // DOWNLOAD_CONTAMINANTS ()
-
-    // DECOMPRESS_CONTAMINANTS (
-    //     DOWNLOAD_CONTAMINANTS.out
-    // )
+    DOWNLOAD_CONTAMINANTS ()
 
     DECOMPRESS_CONTAMINANTS (
-        ch_contaminants
+        DOWNLOAD_CONTAMINANTS.out
     )
 
     REMOVE_CONTAMINANTS (
@@ -287,17 +280,22 @@ process CONVERT_TO_FASTA {
 }
 
 
-// process DOWNLOAD_CONTAMINANTS {
+process DOWNLOAD_CONTAMINANTS {
 
-//     out:
-//     path tar
+    /*
+    Here the workflow automatically downloads the tarball of contaminant reference
+    sequences from the Open Data Sharing Portal for Ramuta et al. 2023
+    */
 
-//     script:
-//     """
-//     curl
-//     """
+    out:
+    path tar
 
-// }
+    script:
+    """
+    wget ${params.contaminants_tar}
+    """
+
+}
 
 
 process DECOMPRESS_CONTAMINANTS {
