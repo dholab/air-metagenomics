@@ -508,7 +508,7 @@ process MAKE_VIRUS_LOOKUP {
     path fasta
 
     output:
-    path "*.csv"
+    path "*.tsv"
 
     script:
     """

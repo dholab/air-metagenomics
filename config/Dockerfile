@@ -7,8 +7,8 @@ ENV TZ America/New_York
 
 # Install necessary packages
 RUN apt-get update && \
-    apt-get install -y python-is-python3 python3-pip wget build-essential libz-dev libbz2-dev liblzma-dev \
-    libncurses5-dev libncursesw5-dev libcurl4-openssl-dev libssl-dev zlib1g-dev curl default-jre \
+    apt-get install -y python-is-python3 python3-pip r-base wget build-essential libz-dev libbz2-dev liblzma-dev \
+    libncurses5-dev libncursesw5-dev libcurl4-openssl-dev libssl-dev libxml2-dev zlib1g-dev curl default-jre \
     samtools bcftools vcftools libhts-dev
 
 # Install Miniconda
@@ -33,6 +33,10 @@ RUN pip3 install cutadapt
 
 # Make sure the python path is resolved despite using conda and pip
 ENV PYTHONPATH="${PYTHONPATH}:/usr/local/lib/python3.10/site-packages"
+
+# Install R dependencies
+RUN Rscript -e "install.packages('tidyverse', repos='https://cloud.r-project.org/')" \
+    && Rscript -e "install.packages('openxlsx', repos='https://cloud.r-project.org/')"
 
 # Install bbmap
 RUN wget https://downloads.sourceforge.net/project/bbmap/BBMap_39.01.tar.gz && \
