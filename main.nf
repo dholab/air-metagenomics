@@ -292,7 +292,7 @@ process DOWNLOAD_CONTAMINANTS {
 
     script:
     """
-    wget ${params.contaminants_tar}
+    wget -O contam_ref.tar.gz ${params.contaminants_tar}
     """
 
 }
