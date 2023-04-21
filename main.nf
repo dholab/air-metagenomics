@@ -486,7 +486,7 @@ process RECORD_HITS {
     */
     
     input:
-	tuple path("*.bam*"), val(sample_id)
+	tuple path(bam), val(sample_id)
 
     output:
     path "*_hits.txt"

@@ -20,7 +20,7 @@ RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.
 ENV PATH=/miniconda/bin:$PATH
 
 # Create a new conda environment for sra-tools
-RUN conda create -y --name sra_env -c defaults -c bioconda -c anaconda -c conda-forge sra-tools=3.0.3
+RUN conda create -y --name sra_env -c defaults -c bioconda -c anaconda -c conda-forge -c r sra-tools=3.0.3 r-base r-tidyverse r-openxlsx
 
 # Activate the sra_env environment and add sra-tools to the path
 ENV PATH=/miniconda/envs/sra_env/bin:$PATH
@@ -33,10 +33,6 @@ RUN pip3 install cutadapt
 
 # Make sure the python path is resolved despite using conda and pip
 ENV PYTHONPATH="${PYTHONPATH}:/usr/local/lib/python3.10/site-packages"
-
-# Install R dependencies
-RUN Rscript -e "install.packages('tidyverse', repos='https://cloud.r-project.org/')" \
-    && Rscript -e "install.packages('openxlsx', repos='https://cloud.r-project.org/')"
 
 # Install bbmap
 RUN wget https://downloads.sourceforge.net/project/bbmap/BBMap_39.01.tar.gz && \
