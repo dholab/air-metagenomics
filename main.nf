@@ -306,7 +306,7 @@ process DOWNLOAD_CONTAMINANTS {
     sequences from the Open Data Sharing Portal for Ramuta et al. 2023
     */
 
-    out:
+    output:
     path tar
 
     script:
