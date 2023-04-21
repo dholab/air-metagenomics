@@ -49,7 +49,7 @@ workflow {
 
     REMOVE_CONTAMINANTS (
         CONVERT_TO_FASTA.out,
-        DECOMPRESS_CONTAMINANTS.out
+        DECOMPRESS_CONTAMINANTS.out.collect()
     )
 
     REMOVE_NTC (
