@@ -186,6 +186,8 @@ process SAMPLE_QC {
     
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
+
+    cpus params.max_cpus
 	
 	input:
 	tuple path(fasta), val(sample_id)
@@ -202,21 +204,24 @@ process SAMPLE_QC {
         reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 qin=33 minlength=200 
+        mincalledquality=9 qin=33 minlength=200 \
+        uniquenames=t t=${task.cpus}
         """
     else if( params.pacbio == true )
         """
         reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 qin=33 minlength=200 
+        mincalledquality=9 qin=33 minlength=200 \
+        uniquenames=t t=${task.cpus}
         """
     else 
         """
         reformat.sh in=${fasta} \
         out=${sample_id}_filtered.fastq.gz \
         forcetrimleft=30 forcetrimright2=30 \
-        mincalledquality=9 qin=33 minlength=100 
+        mincalledquality=9 qin=33 minlength=100 \
+        uniquenames=t t=${task.cpus}
         """
 
 }
