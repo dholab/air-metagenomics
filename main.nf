@@ -287,7 +287,7 @@ process CONVERT_TO_FASTA {
     tuple path(fastq), val(sample_id)
     
     output:
-    tuple path("*.fasta.gz"), val(sample_id)
+    path "*.fasta.gz"
 
     script:
     """
@@ -358,13 +358,14 @@ process REMOVE_CONTAMINANTS {
     cpus params.max_cpus
 
     input:
-    tuple path(fasta), val(sample_id)
-    each path(contaminant_files)
+    each path(fasta)
+    path contaminant_files
 
     output:
-	tuple path("${sample_id}_contam_removed.fasta.gz"), val(sample_id)
+	path "${sample_id}_contam_removed.fasta.gz"
 
     script:
+    sample_id = fasta.getSimpleName().replace("_filtered", "")
     """
     ls `realpath *.fa.gz` > contaminant_files.txt
 
@@ -417,13 +418,14 @@ process REMOVE_NTC {
     cpus params.max_cpus
 
     input:
-    tuple path(fasta), val(sample_id)
-    each path(ntc)
+    each path(fasta)
+    path ntc
 
     output:
-	tuple path("${sample_id}_ntc.fasta.gz"), val(sample_id)
+	tuple path("${sample_id}_ntc_removed.fasta.gz"), val(sample_id)
 
     script:
+    sample_id = fasta.getSimpleName().replace("_contam_removed", "")
     """
     minimap2 -ax map-ont --eqx --secondary=no -t ${task.cpus} \
     ${ntc} \
@@ -453,13 +455,14 @@ process MAP_TO_REFSEQS {
     cpus params.max_cpus
 	
 	input:
-	tuple path(fasta), val(sample_id)
-    each path(refseq)
+	each path(fasta)
+    path(refseq)
 	
 	output:
 	tuple path("*.bam*"), val(sample_id)
 	
 	script:
+    sample_id = fasta.getSimpleName().replace("_ntc_removed", "")
 	"""
     minimap2 \
     -ax map-ont \
