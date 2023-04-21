@@ -307,7 +307,7 @@ process DOWNLOAD_CONTAMINANTS {
     */
 
     output:
-    path tar
+    path "*.tar.gz"
 
     script:
     """
