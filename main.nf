@@ -403,6 +403,7 @@ process REMOVE_CONTAMINANTS {
         | reformat.sh unmappedonly=t overwrite=t in=stdin.sam \
         ref=\$i \
         out=tmp.fasta.gz
+        rm tmp_\$basename.fasta.gz
     done && \
     if [ `wc -l < tmp_.fasta.gz` -eq 0 ]; then
         echo "mapping to" \$basename "failed. Retrying."
