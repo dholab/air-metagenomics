@@ -24,7 +24,7 @@ git clone https://github.com/dholab/pathogen-agnostic-sequence-analysis.git .
 
 When the workflow bundle has downloaded, you may need to set the workflow scripts to executable by running `chmod +x bin/*` in the command line.
 
-If you haven't already, you will also need to install the Docker engine. The workflow pulls all the software it needs automatically from Docker Hub, which means you will never need to permanently install that software on your system. To install Docker, simply visit the Docker installation page at [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/). If you are running the workflow on a high-powered computing cluster where you do not have root permissions, you may also run the workflow with [Apptainer (formerly called Singularity)](https://apptainer.org/).
+If you haven't already, you will also need to install the Docker engine. The workflow pulls all the software it needs automatically from Docker Hub, which means you will never need to permanently install that software on your system. To install Docker, simply visit the Docker installation page at [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/). If you are running the workflow on a high-powered computing (HPC) cluster where you do not have root permissions, you may also run the workflow with [Apptainer (formerly called Singularity)](https://apptainer.org/).
 
 ### Nextflow Installation
 
@@ -50,6 +50,8 @@ You are now ready to run the workflow!
 
 ### Running and Managing the Workflow
 
+To run properly, the workflow requires at least 16 gigabytes of RAM, with as much as 250 gigabytes of available disk space. Your mileage may vary with less available memory and disk space.
+
 A core aspect of the workflow's logic is that it runs once for each sequencing run, with the requirement that each run contains at least one negative control. As such, to get the results presented in Ramuta et al. 2023, we ran the workflow twice with the following commands:
 
 #### Sequencing run 1:
@@ -63,3 +65,58 @@ nextflow run main.nf --samplesheet resources/samplesheet_27269.csv
 ```
 nextflow run main.nf --samplesheet resources/samplesheet_28210.csv
 ```
+
+As with any Nextflow workflow, you may resume an interrupted workflow run with the `-resume` command line argument, like so:
+
+```
+nextflow run main.nf --samplesheet resources/samplesheet_28210.csv -resume
+```
+
+You may also run the workflow in the background with the `-bg` flag:
+
+```
+nextflow -bg run main.nf --samplesheet resources/samplesheet_28210.csv
+```
+
+## Workflow Configuration
+
+The most important file to configure this workflow for your own purposes is the sample sheet. This CSV-formatted table has three columns:
+
+- `raw_read_label`: This is either a) a sample identifier that is part of the file names for locally stored FASTQs, or b) an SRA accession. If it is the former, the workflow will merge all FASTQ files that have this label. If it is an SRA accession, it will automatically pull the FASTQ from SRA. We recommend using the latter functionality and supporting open sequence databases.
+- `sample_id`: An identifier you'd like to use for each sample. This is generally a more readable label, but could be whatever you want.
+- `parent_dir`: The parent directory file path for each sample's files. This column corresponds to using a `raw_read_label` for a locally stored file. If the `raw_read_label` column is all SRA accessions, you may leave this column blank.
+
+Additionally, there are a number of useful settings built into this workflow. The first is a `low_disk_mode`, which prevents the workflow from copying large output files into the results directory. This will roughly half the amount of disk space used by the workflow. It is invoked as a simple true/false boolean, like so:
+
+```
+nextflow run main.nf --samplesheet resources/samplesheet_28210.csv --low_disk_mode true
+```
+
+The workflow also allows you to specify an adapter sequence with the parameter `adapter_seq`, a reference sequence file with the parameter `virus_ref`, and a results directory with `results`, as demonstrated in the more complex command below:
+
+```
+nextflow run main.nf \
+--samplesheet resources/samplesheet.csv \
+--virus_ref /absolute/path/to/reference.fasta \
+--results ~/Downloads/new_results \
+--adapter_seq TTTTTTTTTTAATGTACTTCGTTCAGTTACGTATTGCT \
+--low_disk_mode true
+```
+
+Finally, we've made the workflow sensitive to running in a variety of different compute environments. One way we do this is with the `--max_local_cpus` parameter, which you can use to constrain the total number of CPUs that the workflow draws from. Note, however, that using fewer CPUs will mean a longer runtime.
+
+If you are running on an HPC cluster, we recommend you use the `hpc_cluster` profile, like so:
+
+```
+nextflow run main.nf \
+-profile hpc_cluster \
+--samplesheet relative/path/on/node/to/samplesheet.csv \
+--virus_ref relative/path/on/node/to/reference.fasta \
+--results new_results \
+--adapter_seq TTTTTTTTTTAATGTACTTCGTTCAGTTACGTATTGCT \
+--low_disk_mode true
+```
+
+## Workflow Steps
+
+## Acknowledgements
