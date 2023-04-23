@@ -464,7 +464,8 @@ process MAP_TO_REFSEQS {
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
 
-    cpus { task.attempt < 3 ? params.max_cpus : params.total_cpu_count } 
+    cpus params.max_cpus
+    memory { 8.GB * task.attempt }
 	
 	input:
 	each path(fasta)
