@@ -1,5 +1,7 @@
 # Pathogen Agnostic Sequence Analysis
 
+_Developed for Ramuta et al. 2023 (manuscript in preparation)_
+
 ## Overview
 
 NextFlow pipeline for quality controlling and aligning air cartridge sequence reads to a variety of possible pathogens. More narrative description coming soon.
