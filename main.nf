@@ -90,6 +90,7 @@ if ( workflow.profile == "hpc_cluster" ){
 	params.max_cpus = executor.cpus
 } else {
 	params.max_cpus = params.max_local_cpus
+    params.total_cpu_count = Runtime.getRuntime().availableProcessors() 
 }
 
 // specifying whether to run in low disk mode
@@ -356,6 +357,7 @@ process REMOVE_CONTAMINANTS {
     maxRetries 2
 
     cpus params.max_cpus
+    memory { 8.GB * task.attempt }
 
     input:
     each path(fasta)
@@ -380,7 +382,12 @@ process REMOVE_CONTAMINANTS {
     ${fasta} \
     | reformat.sh unmappedonly=t in=stdin.sam \
     ref=\$first \
-    out=tmp.fasta.gz
+    out=tmp.fasta.gz && \
+    if [ `wc -l < tmp_.fasta.gz` -eq 0 ]; then
+        echo "mapping to" \$basename "failed. Retrying."
+        echo "System RAM may be insufficient for building an index to" \$i
+        exit 1
+    fi
 
     for i in `tail -n +2 contaminant_files.txt`; 
     do
@@ -397,6 +404,11 @@ process REMOVE_CONTAMINANTS {
         ref=\$i \
         out=tmp.fasta.gz
     done && \
+    if [ `wc -l < tmp_.fasta.gz` -eq 0 ]; then
+        echo "mapping to" \$basename "failed. Retrying."
+        echo "System RAM may be insufficient for building an index to" \$i
+        exit 1
+    fi && \
     mv tmp.fasta.gz ${sample_id}_contam_removed.fasta.gz
     """
 
@@ -451,8 +463,8 @@ process MAP_TO_REFSEQS {
 
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
-    
-    cpus params.max_cpus
+
+    cpus { task.attempt < 3 ? params.max_cpus : params.total_cpu_count } 
 	
 	input:
 	each path(fasta)
