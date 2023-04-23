@@ -19,7 +19,7 @@ workflow {
         }
     
     ch_ref_seqs = Channel
-        .fromPath( params.virus_ref )
+        .fromPath( params.pathogen_ref )
 	
 	// Workflow steps 
     FIND_AND_MERGE_FASTQS (

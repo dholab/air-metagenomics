@@ -92,12 +92,12 @@ Additionally, there are a number of useful settings built into this workflow. Th
 nextflow run main.nf --samplesheet resources/samplesheet_28210.csv --low_disk_mode true
 ```
 
-The workflow also allows you to specify an adapter sequence with the parameter `adapter_seq`, a reference sequence file with the parameter `virus_ref`, and a results directory with `results`, as demonstrated in the more complex command below:
+The workflow also allows you to specify an adapter sequence with the parameter `adapter_seq`, a reference sequence file with the parameter `pathogen_ref`, and a results directory with `results`, as demonstrated in the more complex command below:
 
 ```
 nextflow run main.nf \
 --samplesheet resources/samplesheet.csv \
---virus_ref /absolute/path/to/reference.fasta \
+--pathogen_ref /absolute/path/to/reference.fasta \
 --results ~/Downloads/new_results \
 --adapter_seq TTTTTTTTTTAATGTACTTCGTTCAGTTACGTATTGCT \
 --low_disk_mode true
@@ -111,7 +111,7 @@ If you are running on an HPC cluster, we recommend you use the `hpc_cluster` pro
 nextflow run main.nf \
 -profile hpc_cluster \
 --samplesheet relative/path/on/node/to/samplesheet.csv \
---virus_ref relative/path/on/node/to/reference.fasta \
+--pathogen_ref relative/path/on/node/to/reference.fasta \
 --results new_results \
 --adapter_seq TTTTTTTTTTAATGTACTTCGTTCAGTTACGTATTGCT \
 --low_disk_mode true
