@@ -8,13 +8,25 @@ NextFlow pipeline for quality controlling and aligning air cartridge sequence re
 
 ## Quick Start
 
-The two core software requirements to run this workflow are Nextflow to manage the data flow and Docker to provide software (though apptainer also works). If Nextflow and Docker are already installed on your system, no `git clone` commands or other setup is required. Simply run the workflow and reproduce our findings with:
+The two core software requirements to run this workflow are Nextflow to manage the data flow and Docker to provide software (though Apptainer also works). If Nextflow and Docker are already installed on your system, no `git clone` commands or other setup is required. Simply run the workflow and reproduce our findings with:
 
 ```
 nextflow run dholab/pathogen-agnostic-sequence-analysis -latest --samplesheet resources/samplesheet_27269.csv
 ```
 
 With this command, Nextflow will automatically pull the workflow bundle of files from this GitHub repository and run it.
+
+## Table of Contents
+
+- [Detailed Instructions]()
+  - [Nextflow Installation]()
+    - [Installation with Conda]()
+    - [Installation with curl]()
+  - [Running and Managing the Workflow]()
+- [Workflow Configuration]()
+- [Workflow Steps]()
+- [Acknowledgements]()
+- [Citing the Workflow]()
 
 ## Detailed Instructions
 
@@ -122,3 +134,5 @@ nextflow run main.nf \
 ## Workflow Steps
 
 ## Acknowledgements
+
+## Citing the Workflow
