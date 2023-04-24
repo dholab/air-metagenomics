@@ -18,15 +18,15 @@ With this command, Nextflow will automatically pull the workflow bundle of files
 
 ## Table of Contents
 
-- [Detailed Instructions]()
-  - [Nextflow Installation]()
-    - [Installation with Conda]()
-    - [Installation with curl]()
-  - [Running and Managing the Workflow]()
-- [Workflow Configuration]()
-- [Workflow Steps]()
-- [Acknowledgements]()
-- [Citing the Workflow]()
+- [Detailed Instructions](https://github.com/dholab/pathogen-agnostic-sequence-analysis#detailed-instructions)
+  - [Nextflow Installation](https://github.com/dholab/pathogen-agnostic-sequence-analysis#nextflow-installation)
+    - [Installation with Conda](https://github.com/dholab/pathogen-agnostic-sequence-analysis#1-installation-with-conda)
+    - [Installation with curl](https://github.com/dholab/pathogen-agnostic-sequence-analysis#2-installation-with-curl)
+  - [Running and Managing the Workflow](https://github.com/dholab/pathogen-agnostic-sequence-analysis#running-and-managing-the-workflow)
+- [Workflow Configuration](https://github.com/dholab/pathogen-agnostic-sequence-analysis#workflow-configuration)
+- [Workflow Steps](https://github.com/dholab/pathogen-agnostic-sequence-analysis#workflow-configuration)
+- [Acknowledgements](https://github.com/dholab/pathogen-agnostic-sequence-analysis#acknowledgements)
+- [Citing the Workflow](https://github.com/dholab/pathogen-agnostic-sequence-analysis#citing-the-workflow)
 
 ## Detailed Instructions
 
