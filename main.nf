@@ -445,7 +445,7 @@ process REMOVE_NTC {
     ${fasta} \
     | reformat.sh unmappedonly=t in=stdin.sam \
     ref=${ntc} \
-    out=${sample_id}_ntc.fasta.gz
+    out=${sample_id}_ntc_removed.fasta.gz
     """
 
 }
