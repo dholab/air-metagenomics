@@ -133,6 +133,29 @@ nextflow run main.nf \
 
 ## Workflow Steps
 
+Broadly speaking, the workflow goes through three phases: 1) Sequence read collection and QC, 2) Sequence read filtering, and 3) Read alignment and reporting.
+
+In phase one, the workflow goes through the following steps:
+
+- `FIND_AND_MERGE_FASTQS`: Here, the workflow either finds demultiplexed reads locally and merges them into one file per sample, or pulls reads automatically from SRA.
+- `SAMPLE_QC`: Next, reads are filtered to a minimum length and quality score, and adapters are trimmed from either end.
+- `FIND_NTC`: Negative control reads, which must be labeled with "NTC\_" in the sample ID, are identified and converted to the more lightweight FASTA format.
+- `CONVERT_TO_FASTA`: Reads corresponding to samples, not controls, are converted to the more lightweight FASTA format.
+
+In phase two, the data moves through these steps:
+
+- `DOWNLOAD_CONTAMINANTS`: Five FASTA files, each of which contain exemplar sequences for a different category of common contaminants, are downloaded automatically from the Ramuta et al. 2023 open data sharing portal.
+- `DECOMPRESS_CONTAMINANTS`: Contaminant FASTAs are downloaded in a compressed tarball to speed up the transfer. Here, they are decompressed to make them accessible downstream.
+- `REMOVE_CONTAMINANTS`: Reads are then mapped to each contaminant FASTA. Only reads that do not map to contaminants—and are thus likely derived from genetic material sampled in the air cartridge—are retained downstream.
+- `REMOVE_NTC`: Finally, reads are mapped to their sequencing run's negative control reads, which removed any contamination present from library preparation.
+
+And in phase three, these steps finish off the workflow:
+
+- `MAP_TO_REFSEQS`: Clean reads are then mapped to a FASTA file containing an arbitrary number of possible pathogen sequences.
+- `RECORD_HITS`: The number of reads that successfully map to any reference sequence are recorded in a text file here.
+- `MAKE_VIRUS_LOOKUP`: Here, the FASTA deflines from the pathogen reference file are parsed into NCBI RefSeq Accession and common name.
+- `GENERATE_PIVOT_TABLE`: Finally, the workflow finishes by generating an Excel Pivot Table to report the positive hits, along with read support, in each sample.
+
 ## Acknowledgements
 
 ## Citing the Workflow
