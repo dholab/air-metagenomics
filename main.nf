@@ -7,10 +7,10 @@ nextflow.enable.dsl = 2
 // WORKFLOW SPECIFICATION
 // --------------------------------------------------------------- //
 workflow {
-	
-	
-	// input channels
-	ch_reads = Channel
+    
+    
+    // input channels
+    ch_reads = Channel
         .fromPath( params.samplesheet )
         .splitCsv( header: true )
         .map { row -> 
@@ -20,8 +20,8 @@ workflow {
     
     ch_ref_seqs = Channel
         .fromPath( params.pathogen_ref )
-	
-	// Workflow steps 
+    
+    // Workflow steps 
     FIND_AND_MERGE_FASTQS (
         ch_reads
     )
@@ -74,8 +74,8 @@ workflow {
         RECORD_HITS.out.collect(),
         MAKE_VIRUS_LOOKUP.out
     )
-	
-	
+    
+    
 }
 // --------------------------------------------------------------- //
 
@@ -87,18 +87,18 @@ workflow {
 
 // Defining number of cpus to use base on execution environment
 if ( workflow.profile == "hpc_cluster" ){
-	params.max_cpus = executor.cpus
+    params.max_cpus = executor.cpus
 } else {
-	params.max_cpus = params.max_local_cpus
+    params.max_cpus = params.max_local_cpus
     params.total_cpu_count = Runtime.getRuntime().availableProcessors() 
 }
 
 // specifying whether to run in low disk mode
 if( params.low_disk_mode == true ) {
-	params.publishMode = 'symlink'
+    params.publishMode = 'symlink'
 }
 else {
-	params.publishMode = 'copy'
+    params.publishMode = 'copy'
 }
 
 // Resources subdirectories
@@ -120,29 +120,29 @@ params.pivot_table = params.results + "/5_pathogen_hits"
 // --------------------------------------------------------------- //
 
 process FIND_AND_MERGE_FASTQS {
-	
-	/*
+    
+    /*
     Here we determine if the read labels are SRA accessions or 
     local file names. If they are SRA accessions, they will be 
     downloaded and merged automatically from SRA servers. If 
     they are local, they will be located and merged.
     */ 
-	
-	tag "${sample_id}"
+    
+    tag "${sample_id}"
     publishDir params.raw_reads, mode: params.publishMode, overwite: true
 
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
 
     cpus 2
-	
-	input:
-	tuple val(label), val(sample_id), path(parent_dir)
-	
-	output:
-	tuple path("${sample_id}.fastq.gz"), val(sample_id)
-	
-	script:
+    
+    input:
+    tuple val(label), val(sample_id), path(parent_dir)
+    
+    output:
+    tuple path("${sample_id}.fastq.gz"), val(sample_id)
+    
+    script:
     if ( label.startsWith("SRR") )
         """
         prefetch ${label}
@@ -175,31 +175,31 @@ process FIND_AND_MERGE_FASTQS {
 
 
 process SAMPLE_QC {
-	
-	/*
+    
+    /*
     Here we run some trimming and quality filtering with the bbmap
     script `reformat.sh` for PacBio or Illumina reads, or cutadapt
     for ONT reads.
     */
-	
-	tag "${sample_id}"
+    
+    tag "${sample_id}"
     publishDir params.filtered_reads, mode: 'copy'
     
     errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
     maxRetries 2
 
     cpus params.max_cpus
-	
-	input:
-	tuple path(fasta), val(sample_id)
-	
-	output:
-	tuple path("*.fastq.gz"), val(sample_id)
+    
+    input:
+    tuple path(fasta), val(sample_id)
+    
+    output:
+    tuple path("*.fastq.gz"), val(sample_id)
 
     when:
     !sample_id.contains("NTC_")
-	
-	script:
+    
+    script:
     if ( params.ont == true )
         """
         reformat.sh in=${fasta} \
@@ -364,7 +364,7 @@ process REMOVE_CONTAMINANTS {
     path contaminant_files
 
     output:
-	path "${sample_id}_contam_removed.fasta.gz"
+    path "${sample_id}_contam_removed.fasta.gz"
 
     script:
     sample_id = fasta.getSimpleName().replace("_filtered", "")
@@ -435,7 +435,7 @@ process REMOVE_NTC {
     path ntc
 
     output:
-	tuple path("${sample_id}_ntc_removed.fasta.gz"), val(sample_id)
+    path "${sample_id}_ntc_removed.fasta.gz"
 
     script:
     sample_id = fasta.getSimpleName().replace("_contam_removed", "")
@@ -452,32 +452,32 @@ process REMOVE_NTC {
 
 
 process MAP_TO_REFSEQS {
-	
-	/* 
+    
+    /* 
     This process maps each sample ID's reads to a reference FASTA 
     of 835 human viruses. The resulting BAMs will serve as "hits"
     for which viruses were present in a given air sample.
     */
-	
-	tag "${sample_id}"
+    
+    tag "${sample_id}"
     publishDir params.bams, mode: 'copy', overwite: true
 
-    errorStrategy { task.attempt < 4 ? 'retry' : 'ignore' }
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
     maxRetries 2
 
     cpus params.max_cpus
     memory { 8.GB * task.attempt }
-	
-	input:
-	each path(fasta)
+    
+    input:
+    each path(fasta)
     path(refseq)
-	
-	output:
-	tuple path("*.bam*"), val(sample_id)
-	
-	script:
+    
+    output:
+    tuple path("*.bam*"), val(sample_id)
+    
+    script:
     sample_id = fasta.getSimpleName().replace("_ntc_removed", "")
-	"""
+    """
     minimap2 \
     -ax map-ont \
     ${refseq} \
@@ -489,7 +489,7 @@ process MAP_TO_REFSEQS {
     ref=${refseq} \
     out=${sample_id}_filtered.bam \
     mappedonly=t
-	"""
+    """
 
 }
 
@@ -503,7 +503,7 @@ process RECORD_HITS {
     */
     
     input:
-	tuple path(bam), val(sample_id)
+    tuple path(bam), val(sample_id)
 
     output:
     path "*_hits.txt"
