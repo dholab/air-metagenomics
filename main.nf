@@ -357,7 +357,7 @@ process REMOVE_CONTAMINANTS {
     maxRetries 2
 
     cpus params.max_cpus
-    memory { 8.GB * task.attempt }
+    memory { 10.GB * task.attempt }
 
     input:
     each path(fasta)
