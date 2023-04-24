@@ -158,4 +158,8 @@ And in phase three, these steps finish off the workflow:
 
 ## Acknowledgements
 
+We thank the developers of Nextflow, BBTools, minimap2, and samtools for the critical subcomponents of this workflow. We also thank the students and staff at the AIDS Vaccine Research Laboratory of University of Wisconsin—Madison for their tireless work and helpful advice throughout the COVID-19 pandemic. And finally, we thank the entire ORegon CHild Absenteeism Due To Respiratory Disease Study (ORCHARDS) team, particularly Jonathan Temte, for making this study possible, and more broadly, for supporting air sampling as an important part of pathogen detection moving forward.
+
 ## Citing the Workflow
+
+A manuscript describing these results and the experimental design that produced them is in preparation. We will update this section when a preprint and the eventual publication is available.
