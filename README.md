@@ -4,7 +4,11 @@ _Developed for Ramuta et al. 2023 (manuscript in preparation)_
 
 ## Overview
 
-NextFlow pipeline for quality controlling and aligning air cartridge sequence reads to a variety of possible pathogens. More narrative description coming soon.
+Pathogen surveillence data from the COVID-19 pandemic overwhelmingly came from individual-testing, SARS-CoV-2 specific assays, such as nasal swab qPCR or rapid antigen tests. However, as individual testing becomes less common in 2023, researchers and public health officials have to pivot toward more population-level, environmental sample-based surveillance. Even still, environmental sample laboratory prep and bioinformatic processing developed in the COVID-19 pandemic tends to be pathogen-specific, leaving us blind to the majority of circulating pathogens that may or may not be present in an environmental sample.
+
+In _Ramuta et al. 2023_, we describe a pathogen-agnostic, metagenomic approach to detecting any pathogen in the air. Using genetic material from air samplers distributed across the Upper Midwest, we show that air samplers can detect a variety of respiratory and enteric pathogens through time, without enriching for any one pathogen in particular. This approach could inform public health decision-making with data on all circulating pathogens, not just those that are expected.
+
+The goal of the Nextflow pipeline and associated files in this repository is to make our results reproducible, and to make the methods we used to generate those results as portable and transparent as possible. We invite anyone interested to view our open data portal at [go.wisc.edu/h8mn47](https://go.wisc.edu/h8mn47), and to make use of our data in [NCBI BioProject # PRJNA950127](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA950127).
 
 ## Quick Start
 
