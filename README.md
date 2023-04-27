@@ -137,7 +137,7 @@ nextflow run main.nf \
 
 ## Workflow Steps
 
-Broadly speaking, the workflow goes through three phases: 1) Sequence read collection and QC, 2) Sequence read filtering, and 3) Read alignment and reporting.
+Broadly speaking, the workflow goes through three phases: 1) Sequence read collection and QC, 2) Sequence read filtering, and 3) Read alignment and reporting. All steps are visualized in [the workflow visualization](https://github.com/dholab/pathogen-agnostic-sequence-analysis/blob/main/workflow-visualization.png) in this repository.
 
 In phase one, the workflow goes through the following steps:
 
