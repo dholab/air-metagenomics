@@ -1,6 +1,6 @@
 # Pathogen Agnostic Sequence Analysis
 
-_Developed for Ramuta et al. 2023 (manuscript in preparation)_
+Developed for [Minor and Ramuta et al. 2023, _Metagenomic sequencing detects human respiratory and enteric viruses in air samples collected from congregate settings_](https://www.nature.com/articles/s41598-023-48352-6)
 
 ## Overview
 
